@@ -6,6 +6,8 @@
 # Üretilen baseline ve geçici test dosyaları
 baselines.csv
 Files/
+bin/
+
 
 # User-specific files
 *.rsuser
