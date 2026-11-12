@@ -13,14 +13,38 @@ function Add-FileToBaseline{
 			Write-Error -Message "$targetFilePath does not exist" -ErrorAction Stop
 		}
 
-		$targetPath = Get-Item -Path $targetFilePath -ErrorAction Stop
-		$resolvedTargetPath = $targetPath.FullName
+		$targetItem = Get-Item -Path $targetFilePath -ErrorAction Stop
+		$resolvedTargetPath = $targetItem.FullName
 
-		$hash= Get-FileHash -Path $resolvedTargetPath -Algorithm SHA256
+		$imported = Import-Csv -Path $baselineFilePath -Delimiter ","
+		$currentBaseline = if ($null -eq $imported) { @() } else { @($imported) }
 
-		"$($resolvedTargetPath),$($hash.Hash)" | Out-File -FilePath $baselineFilePath -Encoding utf8 -Append
+		if($resolvedTargetPath -in $currentBaseline.path){
+			Write-Error -Message "$resolvedTargetPath already exists in the baseline"
+			do{
+				$overwrite=Read-Host "Do you want to overwrite the existing entry? (Y/N)"
+				if($overwrite -in @('y','yes')){
+					Write-Host "Entry will be overwritten." -ForegroundColor Cyan
 
-		Write-Output "Entry succesfully added into the baseline"
+					$currentBaseline = @($currentBaseline | Where-Object { $_.path -ne $resolvedTargetPath })
+				}elseif($overwrite -in @('n','no')){
+					Write-Host "File path will not be overwritten." -ForegroundColor Gray
+					return
+				}else{
+					Write-Host "Invalid input. Please enter Y or N." -ForegroundColor Red
+				}
+			}while($overwrite -notin @('y','yes','n','no'))
+		}
+		$hash = Get-FileHash -Path $resolvedTargetPath -Algorithm SHA256
+		$newEntry = [PSCustomObject]@{
+			path = $resolvedTargetPath
+			hash = $hash.Hash
+		}
+
+		$currentBaseline += $newEntry
+		$currentBaseline | Export-Csv -Path $baselineFilePath -Delimiter "," -NoTypeInformation -Encoding utf8
+		Write-Host "Entry successfully added into the baseline." -ForegroundColor Green
+
 	}catch{
 		return $_.Exception.Message
 	}

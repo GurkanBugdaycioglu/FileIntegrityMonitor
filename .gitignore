@@ -3,6 +3,10 @@
 ##
 ## Get latest from https://github.com/github/gitignore/blob/master/VisualStudio.gitignore
 
+# Üretilen baseline ve geçici test dosyaları
+baselines.csv
+Files/
+
 # User-specific files
 *.rsuser
 *.suo
