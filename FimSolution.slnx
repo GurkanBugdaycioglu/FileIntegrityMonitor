@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="FimConsole/FimConsole.csproj" />
+  <Project Path="FimCore/FimCore.csproj" />
+</Solution>
