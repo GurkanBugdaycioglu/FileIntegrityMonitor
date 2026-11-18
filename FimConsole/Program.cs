@@ -9,6 +9,7 @@ namespace FimConsole
 {
     public class Program
     {
+        private static readonly object _consoleLock = new object();
         public static void Main(string[] args)
         {
             Console.OutputEncoding = Encoding.UTF8;
@@ -128,27 +129,30 @@ namespace FimConsole
 
         private static void PrintAlert(IntegrityEvent ev)
         {
-            switch (ev.EventType)
+            lock (_consoleLock)
             {
-                case "Unchanged":
-                    Console.ForegroundColor = ConsoleColor.Green;
-                    Console.WriteLine($"[{ev.Timestamp:HH:mm:ss}] [UNCHANGED] {ev.FilePath}");
-                    break;
-                case "Modified":
-                    Console.ForegroundColor = ConsoleColor.Red;
-                    Console.WriteLine($"[{ev.Timestamp:HH:mm:ss}] [MODIFIED!] {ev.FilePath}");
-                    break;
-                case "Deleted":
-                    Console.ForegroundColor = ConsoleColor.DarkRed;
-                    Console.WriteLine($"[{ev.Timestamp:HH:mm:ss}] [DELETED!]  {ev.FilePath}");
-                    break;
-                case "Created":
-                case "Renamed":
-                    Console.ForegroundColor = ConsoleColor.Magenta;
-                    Console.WriteLine($"[{ev.Timestamp:HH:mm:ss}] [{ev.EventType.ToUpperInvariant()}!] {ev.FilePath}");
-                    break;
+                    switch (ev.EventType)
+                {
+                    case "Unchanged":
+                        Console.ForegroundColor = ConsoleColor.Green;
+                        Console.WriteLine($"[{ev.Timestamp:HH:mm:ss}] [UNCHANGED] {ev.FilePath}");
+                        break;
+                    case "Modified":
+                        Console.ForegroundColor = ConsoleColor.Red;
+                        Console.WriteLine($"[{ev.Timestamp:HH:mm:ss}] [MODIFIED!] {ev.FilePath}");
+                        break;
+                    case "Deleted":
+                        Console.ForegroundColor = ConsoleColor.DarkRed;
+                        Console.WriteLine($"[{ev.Timestamp:HH:mm:ss}] [DELETED!]  {ev.FilePath}");
+                        break;
+                    case "Created":
+                    case "Renamed":
+                        Console.ForegroundColor = ConsoleColor.Magenta;
+                        Console.WriteLine($"[{ev.Timestamp:HH:mm:ss}] [{ev.EventType.ToUpperInvariant()}!] {ev.FilePath}");
+                        break;
+                }
+                Console.ResetColor();
             }
-            Console.ResetColor();
         }
 
         private static void EnsureSampleEnvironment(string directoryPath)
