@@ -18,7 +18,10 @@ namespace FimCore.Services
 
         public void LogEvent(IntegrityEvent integrityEvent)
         {
-            string logLine = $"[{integrityEvent.Timestamp:yyyy-MM-dd HH:mm:ss}] [{integrityEvent.EventType.ToUpperInvariant()}] {integrityEvent.FilePath}{Environment.NewLine}";
+            string oldHashText = string.IsNullOrEmpty(integrityEvent.OldHash) ? "N/A" : integrityEvent.OldHash;
+            string newHashText = string.IsNullOrEmpty(integrityEvent.NewHash) ? "N/A" : integrityEvent.NewHash;
+
+            string logLine = $"[{integrityEvent.Timestamp:yyyy-MM-dd HH:mm:ss}] [{integrityEvent.EventType.ToUpperInvariant()}] {integrityEvent.FilePath} | OldHash: {oldHashText} | NewHash: {newHashText}{Environment.NewLine}";
 
             lock (_lockObj)
             {

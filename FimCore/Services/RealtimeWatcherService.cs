@@ -73,11 +73,15 @@ namespace FimCore.Services
         {
             if (Directory.Exists(e.FullPath) || IsDebounced(e.FullPath)) return;
 
+            string? newHash = ComputeHashWithRetry(e.FullPath);
+
             var alert = new IntegrityEvent
             {
                 FilePath = e.FullPath,
                 EventType = "Created",
-                Timestamp = DateTime.Now
+                Timestamp = DateTime.Now,
+                OldHash = null,
+                NewHash = newHash
             };
             PublishAlert(alert);
         }
@@ -100,7 +104,9 @@ namespace FimCore.Services
                 {
                     FilePath = e.FullPath,
                     EventType = "Modified",
-                    Timestamp = DateTime.Now
+                    Timestamp = DateTime.Now,
+                    OldHash = baselineEntry.Sha256Hash,
+                    NewHash = currentHash
                 };
                 PublishAlert(alert);
             }
@@ -110,11 +116,17 @@ namespace FimCore.Services
         {
             if (IsDebounced(e.FullPath)) return;
 
+            var entries = _repository.LoadAll();
+            var baselineEntry = entries.FirstOrDefault(x =>
+                string.Equals(x.FilePath, e.FullPath, StringComparison.OrdinalIgnoreCase));
+
             var alert = new IntegrityEvent
             {
                 FilePath = e.FullPath,
                 EventType = "Deleted",
-                Timestamp = DateTime.Now
+                Timestamp = DateTime.Now,
+                OldHash = baselineEntry?.Sha256Hash,
+                NewHash = null
             };
             PublishAlert(alert);
         }
