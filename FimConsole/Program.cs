@@ -25,7 +25,7 @@ namespace FimConsole
             IHashCalculator calculator = new Sha256HashCalculator();
             IBaselineRepository repository = new CsvBaselineRepository(baselineFilePath);
             IAuditLogger auditLogger = new FileAuditLogger(auditLogPath);
-            FimEngine engine = new FimEngine(calculator, repository);
+            FimEngine engine = new FimEngine(calculator, repository, auditLogger);
 
             while (true)
             {

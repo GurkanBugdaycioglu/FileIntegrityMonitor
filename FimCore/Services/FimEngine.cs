@@ -11,11 +11,13 @@ namespace FimCore.Services
     {
         private readonly IHashCalculator _hashCalculator;
         private readonly IBaselineRepository _repository;
+        private readonly IAuditLogger _auditLogger;
 
-        public FimEngine(IHashCalculator hashCalculator, IBaselineRepository repository)
+        public FimEngine(IHashCalculator hashCalculator, IBaselineRepository repository, IAuditLogger auditLogger)
         {
             _hashCalculator = hashCalculator;
             _repository = repository;
+            _auditLogger = auditLogger;
         }
         public int CreateBaseline(string targetDirectory)
         {
@@ -78,12 +80,17 @@ namespace FimCore.Services
             {
                 if (!File.Exists(entry.FilePath))
                 {
-                    events.Add(new IntegrityEvent
+                    var deletedEvent = new IntegrityEvent
                     {
                         FilePath = entry.FilePath,
                         EventType = "Deleted",
-                        Timestamp = DateTime.Now
-                    });
+                        Timestamp = DateTime.Now,
+                        OldHash = entry.Sha256Hash,
+                        NewHash = null
+                    };
+
+                    events.Add(deletedEvent);
+                    _auditLogger.LogEvent(deletedEvent);
                     continue;
                 }
 
@@ -95,17 +102,24 @@ namespace FimCore.Services
                     {
                         FilePath = entry.FilePath,
                         EventType = "Unchanged",
-                        Timestamp = DateTime.Now
+                        Timestamp = DateTime.Now,
+                        OldHash = entry.Sha256Hash,
+                        NewHash = currentHash
                     });
                 }
                 else
                 {
-                    events.Add(new IntegrityEvent
+                    var modifiedEvent = new IntegrityEvent
                     {
                         FilePath = entry.FilePath,
                         EventType = "Modified",
-                        Timestamp = DateTime.Now
-                    });
+                        Timestamp = DateTime.Now,
+                        OldHash = entry.Sha256Hash,
+                        NewHash = currentHash
+                    };
+
+                    events.Add(modifiedEvent);
+                    _auditLogger.LogEvent(modifiedEvent);
                 }
             }
 
