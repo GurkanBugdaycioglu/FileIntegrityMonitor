@@ -135,11 +135,19 @@ namespace FimCore.Services
         {
             if (IsDebounced(e.FullPath)) return;
 
+            var entries = _repository.LoadAll();
+            var baselineEntry = entries.FirstOrDefault(x =>
+                string.Equals(x.FilePath, e.OldFullPath, StringComparison.OrdinalIgnoreCase));
+
+            string? currentHash = Directory.Exists(e.FullPath) ? null : ComputeHashWithRetry(e.FullPath);
+
             var alert = new IntegrityEvent
             {
                 FilePath = $"{e.OldFullPath} -> {e.FullPath}",
                 EventType = "Renamed",
-                Timestamp = DateTime.Now
+                Timestamp = DateTime.Now,
+                OldHash = baselineEntry?.Sha256Hash,
+                NewHash = currentHash
             };
             PublishAlert(alert);
         }
